@@ -158,6 +158,15 @@ stop_server() {
     else
         echo -e "${YELLOW}服务端未运行${NC}"
     fi
+    
+    # 额外检查并清理可能占用8886端口的进程
+    sleep 1
+    local port_process=$(netstat -tulpn 2>/dev/null | grep :8886 | awk '{print $7}' | cut -d'/' -f1)
+    if [ ! -z "$port_process" ] && [ "$port_process" != "-" ]; then
+        echo -e "${YELLOW}清理占用8886端口的进程 (PID: $port_process)${NC}"
+        kill "$port_process" 2>/dev/null || true
+        sleep 1
+    fi
 }
 
 # 停止客户端

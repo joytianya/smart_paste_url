@@ -30,13 +30,13 @@
 
 ## 🚀 快速开始
 
-### 一键启动（推荐）
+### 方式一：本地快速体验
 
-使用管理脚本可以轻松启动和管理所有服务：
+使用管理脚本可以在本地快速启动服务：
 
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone https://github.com/joytianya/smart_paste_url.git
 cd smart_paste_url
 
 # 一键启动所有服务（服务端 + 客户端）
@@ -44,14 +44,13 @@ cd smart_paste_url
 
 # 查看服务状态
 ./manage.sh status
-
-# 停止所有服务
-./manage.sh stop
 ```
 
-### 远程服务器已部署 🎉
+### 方式二：使用现有的演示服务器
 
-服务器已部署在：`https://smart-paste.matrixtools.me`
+如果你只想快速体验功能，可以直接使用我们的演示服务器：
+
+**演示服务器：** `https://smart-paste.matrixtools.me`
 
 - 健康检查: https://smart-paste.matrixtools.me/health
 - 上传接口: POST https://smart-paste.matrixtools.me/upload
@@ -59,9 +58,197 @@ cd smart_paste_url
 - 图片接口: GET https://smart-paste.matrixtools.me/image/{hash}
 
 ```bash
-# 仅启动客户端连接远程服务器
+# 配置客户端连接到演示服务器
+cd client
+# 编辑 config.json，设置 server_url 为 "https://smart-paste.matrixtools.me"
 ./manage.sh start-client
 ```
+
+> ⚠️ **注意：** 演示服务器仅供测试使用，生产环境请部署自己的服务器。
+
+### 方式三：生产环境部署（推荐）
+
+如果你已经准备好**域名**和**服务器**，建议部署自己的服务：
+
+#### 🔧 配置要求
+
+**前提条件：**
+- ✅ 拥有一个域名（如：`paste.yourdomain.com`）
+- ✅ 一台服务器（VPS/云服务器）
+- ✅ 域名已解析到服务器IP
+- ✅ 服务器已安装Node.js 16+和Python 3.7+
+
+#### 📋 一键部署步骤
+
+**1. 服务器端部署**
+```bash
+# 在服务器上执行
+git clone https://github.com/joytianya/smart_paste_url.git
+cd smart_paste_url
+
+# 安装依赖
+./manage.sh install
+
+# 配置服务端域名（重要）
+cd server
+# 编辑 server.js，修改第11行的 BASE_URL
+# 将 https://smart-paste.matrixtools.me 改为你的域名
+nano server.js  # 或使用 vim/其他编辑器
+
+# 启动服务端
+cd ..
+./manage.sh start-server
+```
+
+**2. 配置域名和HTTPS**
+
+使用Nginx配置反向代理和SSL证书：
+
+```nginx
+# /etc/nginx/sites-available/smart-paste
+server {
+    listen 80;
+    server_name paste.yourdomain.com;  # 替换为你的域名
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name paste.yourdomain.com;  # 替换为你的域名
+
+    # SSL 证书配置（使用 Let's Encrypt 或其他证书）
+    ssl_certificate /path/to/your/certificate.pem;
+    ssl_certificate_key /path/to/your/private.key;
+
+    # 安全配置
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512;
+    ssl_session_cache shared:SSL:10m;
+
+    location / {
+        proxy_pass http://localhost:8886;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # 大文件上传支持
+    client_max_body_size 10M;
+}
+```
+
+```bash
+# 启用站点并重启Nginx
+sudo ln -s /etc/nginx/sites-available/smart-paste /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+
+# 获取免费SSL证书（Let's Encrypt）
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d paste.yourdomain.com  # 替换为你的域名
+```
+
+**3. 客户端配置**
+
+在任何需要使用的机器上：
+
+```bash
+# 克隆项目（如果还没有）
+git clone https://github.com/joytianya/smart_paste_url.git
+cd smart_paste_url
+
+# 配置客户端连接到你的服务器
+cd client
+nano config.json  # 编辑配置文件
+```
+
+`client/config.json` 配置示例：
+```json
+{
+  "server_url": "https://paste.yourdomain.com",  
+  "check_interval": 1.0,
+  "supported_formats": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"],
+  "max_file_size": 10485760
+}
+```
+
+```bash
+# 启动客户端
+./manage.sh start-client
+```
+
+#### ⚡ 快速配置脚本
+
+为了简化配置过程，我们提供了配置助手：
+
+```bash
+# 在项目根目录运行配置助手
+./configure.sh
+# 会提示输入域名并自动更新配置文件
+```
+
+#### 🔒 安全配置建议
+
+**1. 防火墙配置**
+```bash
+# 开放必要端口
+sudo ufw allow 22    # SSH
+sudo ufw allow 80    # HTTP
+sudo ufw allow 443   # HTTPS  
+sudo ufw enable
+
+# 确保8886端口仅本地访问（由Nginx代理）
+sudo ufw deny 8886
+```
+
+**2. 系统服务配置**
+```bash
+# 创建systemd服务文件
+sudo tee /etc/systemd/system/smart-paste-url.service > /dev/null <<EOF
+[Unit]
+Description=Smart Paste URL Service
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu  # 替换为你的用户名
+WorkingDirectory=/path/to/smart_paste_url  # 替换为项目路径
+ExecStart=/path/to/smart_paste_url/manage.sh start-server
+ExecStop=/path/to/smart_paste_url/manage.sh stop-server
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 启用并启动服务
+sudo systemctl daemon-reload
+sudo systemctl enable smart-paste-url
+sudo systemctl start smart-paste-url
+```
+
+**3. 日志监控**
+```bash
+# 设置日志轮转
+sudo tee /etc/logrotate.d/smart-paste-url > /dev/null <<EOF
+/path/to/smart_paste_url/*.log {
+    daily
+    rotate 30
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 ubuntu ubuntu
+}
+EOF
+```
+
+> ⚠️ **重要提示：**
+> - 确保服务端的 `BASE_URL` 和客户端的 `server_url` 完全一致
+> - 建议使用HTTPS以确保数据传输安全
+> - 定期备份上传的图片和数据库文件
+> - 监控磁盘空间使用情况
 
 ### 手动启动方式
 
