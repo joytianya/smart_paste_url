@@ -26,22 +26,34 @@
 
 ## 快速开始
 
-### 1. 启动服务器
+### 远程服务器已部署 🎉
+
+服务器已部署在：`http://104.225.151.25:34214`
+
+- 健康检查: http://104.225.151.25:34214/health
+- 上传接口: POST http://104.225.151.25:34214/upload
+- 检查接口: GET http://104.225.151.25:34214/check/{hash}
+- 图片接口: GET http://104.225.151.25:34214/image/{hash}
+
+### 启动客户端
+
+**方法1：使用启动脚本**
+```bash
+python3 start_client.py
+```
+
+**方法2：直接运行客户端**
+```bash
+pip3 install Pillow pyperclip requests
+python3 client/monitor.py
+```
+
+### 本地服务器部署（可选）
 
 ```bash
 cd server
 npm install
 npm start
-```
-
-服务器将在 `http://localhost:3000` 启动
-
-### 2. 运行客户端
-
-```bash
-cd client
-pip install -r requirements.txt
-python monitor.py
 ```
 
 ### 3. 使用方法

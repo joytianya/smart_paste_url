@@ -1,5 +1,5 @@
 {
-  "server_url": "http://localhost:3000",
+  "server_url": "http://104.225.151.25:34214",
   "check_interval": 1.0,
   "supported_formats": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"],
   "max_file_size": 10485760
