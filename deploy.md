@@ -23,7 +23,7 @@ cd server
 npm install
 
 # 设置环境变量（重要！）
-export BASE_URL="http://104.225.151.25:34214"
+export BASE_URL="https://smart-paste.matrixtools.me"
 
 # 启动服务
 npm start
@@ -35,7 +35,7 @@ npm start
 npm install -g pm2
 
 # 启动服务
-BASE_URL="http://104.225.151.25:34214" pm2 start server.js --name smart-paste-url
+BASE_URL="https://smart-paste.matrixtools.me" pm2 start server.js --name smart-paste-url
 
 # 保存PM2配置
 pm2 save
@@ -45,7 +45,7 @@ pm2 startup
 ### 4. 验证部署
 ```bash
 # 检查健康状态
-curl http://104.225.151.25:34214/health
+curl https://smart-paste.matrixtools.me/health
 
 # 应该返回：
 # {"status":"ok","timestamp":"2024-01-01T00:00:00.000Z"}
@@ -55,7 +55,7 @@ curl http://104.225.151.25:34214/health
 
 ### 问题现象
 - 客户端显示上传成功，但返回 `http://localhost:34214/image/...` 
-- 远程服务器 `http://104.225.151.25:34214` 返回502错误
+- 远程服务器 `https://smart-paste.matrixtools.me` 返回502错误
 
 ### 解决方案
 1. **确保远程服务器正在运行**：
@@ -65,7 +65,7 @@ curl http://104.225.151.25:34214/health
 
 2. **设置正确的BASE_URL**：
    ```bash
-   export BASE_URL="http://104.225.151.25:34214"
+   export BASE_URL="https://smart-paste.matrixtools.me"
    node server.js
    ```
 
@@ -75,7 +75,7 @@ curl http://104.225.151.25:34214/health
    pkill -f "node server.js"
    
    # 启动新版本
-   BASE_URL="http://104.225.151.25:34214" node server.js
+   BASE_URL="https://smart-paste.matrixtools.me" node server.js
    ```
 
 ## 客户端配置验证
@@ -83,7 +83,7 @@ curl http://104.225.151.25:34214/health
 当前客户端配置文件 `client/config.json`：
 ```json
 {
-  "server_url": "http://104.225.151.25:34214",
+  "server_url": "https://smart-paste.matrixtools.me",
   "check_interval": 1.0,
   "supported_formats": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"],
   "max_file_size": 10485760

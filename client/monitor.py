@@ -14,12 +14,16 @@ from io import BytesIO
 import requests
 import pyperclip
 from PIL import Image, ImageGrab
+from pynput import keyboard
+from pynput.keyboard import Key, Listener
 
 class SmartPasteClient:
     def __init__(self, config_path='config.json'):
         self.load_config(config_path)
         self.last_clipboard_hash = None
         self.running = True
+        self.pressed_keys = set()
+        self.last_url = None  # 存储最后生成的图片URL
         
     def load_config(self, config_path):
         """加载配置文件"""
@@ -42,14 +46,14 @@ class SmartPasteClient:
                 continue
         
         if config:
-            self.server_url = config.get('server_url', 'http://104.225.151.25:34214')
+            self.server_url = config.get('server_url', 'https://smart-paste.matrixtools.me')
             self.check_interval = config.get('check_interval', 1.0)
             self.supported_formats = config.get('supported_formats', ['.png', '.jpg', '.jpeg'])
             self.max_file_size = config.get('max_file_size', 10 * 1024 * 1024)
             print(f"服务器地址: {self.server_url}")
         else:
             print("配置文件未找到，使用默认配置")
-            self.server_url = 'http://104.225.151.25:34214'
+            self.server_url = 'https://smart-paste.matrixtools.me'
             self.check_interval = 1.0
             self.supported_formats = ['.png', '.jpg', '.jpeg']
             self.max_file_size = 10 * 1024 * 1024
@@ -127,6 +131,65 @@ class SmartPasteClient:
             print(f"上传时网络错误: {e}")
             return False, None, False
 
+    def on_key_press(self, key):
+        """键盘按下事件处理"""
+        try:
+            self.pressed_keys.add(key)
+        except:
+            pass
+    
+    def on_key_release(self, key):
+        """键盘释放事件处理"""
+        try:
+            # 检测 Shift + Cmd + V 组合键
+            if (Key.shift in self.pressed_keys and 
+                Key.cmd in self.pressed_keys and 
+                hasattr(key, 'char') and key.char == 'v'):
+                
+                print("\n🔥 检测到 Shift+Cmd+V 快捷键")
+                self.paste_image_url()
+                
+            self.pressed_keys.discard(key)
+        except:
+            pass
+    
+    def paste_image_url(self):
+        """粘贴图片URL到活跃应用"""
+        if self.last_url:
+            # 先暂时保存当前剪贴板内容
+            current_clipboard = None
+            try:
+                current_clipboard = pyperclip.paste()
+            except:
+                pass
+            
+            # 将URL放入剪贴板
+            pyperclip.copy(self.last_url)
+            
+            # 模拟 Cmd+V 粘贴
+            time.sleep(0.1)  # 短暂延迟确保剪贴板更新
+            
+            # 使用 pynput 模拟按键
+            from pynput.keyboard import Controller
+            controller = Controller()
+            
+            # 按下 Cmd+V
+            with controller.pressed(Key.cmd):
+                controller.press('v')
+                controller.release('v')
+            
+            print(f"📋 已粘贴URL: {self.last_url}")
+            
+            # 恢复之前的剪贴板内容（延迟恢复）
+            if current_clipboard:
+                def restore_clipboard():
+                    time.sleep(0.5)  # 等待粘贴完成
+                    pyperclip.copy(current_clipboard)
+                
+                threading.Thread(target=restore_clipboard, daemon=True).start()
+        else:
+            print("📋 没有可用的图片URL")
+    
     def process_clipboard_image(self):
         """处理剪贴板中的图片"""
         image_data, image_hash = self.get_clipboard_image()
@@ -147,6 +210,7 @@ class SmartPasteClient:
             print(f"图片已存在，使用现有URL: {url}")
             pyperclip.copy(url)
             self.last_clipboard_hash = image_hash
+            self.last_url = url  # 保存URL用于快捷键粘贴
             return True
             
         # 上传新图片
@@ -162,6 +226,7 @@ class SmartPasteClient:
             # 将URL复制到剪贴板
             pyperclip.copy(url)
             self.last_clipboard_hash = image_hash
+            self.last_url = url  # 保存URL用于快捷键粘贴
             return True
         else:
             print("图片上传失败")
@@ -183,6 +248,14 @@ class SmartPasteClient:
             print(f"请确保服务器在 {self.server_url} 上运行")
             return False
 
+    def start_keyboard_listener(self):
+        """启动键盘监听器"""
+        self.keyboard_listener = Listener(
+            on_press=self.on_key_press,
+            on_release=self.on_key_release
+        )
+        self.keyboard_listener.start()
+    
     def run(self):
         """运行监控循环"""
         print("Smart Paste URL 客户端启动")
@@ -195,8 +268,12 @@ class SmartPasteClient:
             
         print("🎯 开始监控剪贴板...")
         print("💡 复制图片后会自动上传并替换为URL")
+        print("🔥 按 Shift+Cmd+V 可以粘贴最后的图片URL")
         print("⌨️  按 Ctrl+C 退出")
         print("=" * 50)
+        
+        # 启动键盘监听器
+        self.start_keyboard_listener()
         
         try:
             while self.running:
@@ -217,6 +294,10 @@ class SmartPasteClient:
                     
         except KeyboardInterrupt:
             print("\n👋 已退出监控")
+        finally:
+            # 停止键盘监听器
+            if hasattr(self, 'keyboard_listener'):
+                self.keyboard_listener.stop()
 
 def main():
     """主函数"""

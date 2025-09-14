@@ -51,14 +51,12 @@ cd smart_paste_url
 
 ### 远程服务器已部署 🎉
 
-如果你只需要使用客户端连接远程服务器：
+服务器已部署在：`https://smart-paste.matrixtools.me`
 
-服务器地址：`http://104.225.151.25:34214`
-
-- 健康检查: http://104.225.151.25:34214/health
-- 上传接口: POST http://104.225.151.25:34214/upload
-- 检查接口: GET http://104.225.151.25:34214/check/{hash}
-- 图片接口: GET http://104.225.151.25:34214/image/{hash}
+- 健康检查: https://smart-paste.matrixtools.me/health
+- 上传接口: POST https://smart-paste.matrixtools.me/upload
+- 检查接口: GET https://smart-paste.matrixtools.me/check/{hash}
+- 图片接口: GET https://smart-paste.matrixtools.me/image/{hash}
 
 ```bash
 # 仅启动客户端连接远程服务器
