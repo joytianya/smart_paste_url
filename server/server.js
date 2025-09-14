@@ -8,7 +8,7 @@ const cors = require('cors');
 
 const app = express();
 const port = 8886;
-const baseUrl = process.env.BASE_URL || `https://smart-paste.matrixtools.me`;
+const baseUrl = process.env.BASE_URL || `http://localhost:8886`;
 
 // 启用CORS
 app.use(cors());

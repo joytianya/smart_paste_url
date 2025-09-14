@@ -1,5 +1,5 @@
 {
-  "server_url": "https://smart-paste.matrixtools.me",
+  "server_url": "http://localhost:8886",
   "check_interval": 1.0,
   "supported_formats": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"],
   "max_file_size": 10485760
