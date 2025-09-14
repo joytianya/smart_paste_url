@@ -23,27 +23,37 @@ class SmartPasteClient:
         
     def load_config(self, config_path):
         """加载配置文件"""
-        try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-            
+        # 尝试多个可能的配置文件路径
+        possible_paths = [
+            config_path,  # 当前目录
+            os.path.join('..', config_path),  # 上级目录
+            os.path.join('client', config_path)  # client子目录
+        ]
+        
+        config = None
+        for path in possible_paths:
+            try:
+                if os.path.exists(path):
+                    with open(path, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                    print(f"配置文件加载成功：{path}")
+                    break
+            except (FileNotFoundError, json.JSONDecodeError):
+                continue
+        
+        if config:
             self.server_url = config.get('server_url', 'http://104.225.151.25:34214')
             self.check_interval = config.get('check_interval', 1.0)
             self.supported_formats = config.get('supported_formats', ['.png', '.jpg', '.jpeg'])
             self.max_file_size = config.get('max_file_size', 10 * 1024 * 1024)
-            
-            print(f"配置加载成功：服务器地址 {self.server_url}")
-            
-        except FileNotFoundError:
+            print(f"服务器地址: {self.server_url}")
+        else:
             print("配置文件未找到，使用默认配置")
             self.server_url = 'http://104.225.151.25:34214'
             self.check_interval = 1.0
             self.supported_formats = ['.png', '.jpg', '.jpeg']
             self.max_file_size = 10 * 1024 * 1024
-            
-        except json.JSONDecodeError:
-            print("配置文件格式错误，使用默认配置")
-            sys.exit(1)
+            print(f"默认服务器地址: {self.server_url}")
 
     def calculate_image_hash(self, image_data):
         """计算图片的MD5哈希"""

@@ -39,13 +39,15 @@
 
 **方法1：使用启动脚本**
 ```bash
+cd client
 python3 start_client.py
 ```
 
 **方法2：直接运行客户端**
 ```bash
+cd client  
 pip3 install Pillow pyperclip requests
-python3 client/monitor.py
+python3 monitor.py
 ```
 
 ### 本地服务器部署（可选）
