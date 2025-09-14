@@ -21,12 +21,29 @@ CLIENT_DIR="$PROJECT_ROOT/client"
 SERVER_PID_FILE="$PROJECT_ROOT/.server.pid"
 CLIENT_PID_FILE="$PROJECT_ROOT/.client.pid"
 
+# 解析命令行参数
+SERVER_URL=""
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --server=*)
+                SERVER_URL="${1#*=}"
+                shift
+                ;;
+            *)
+                # 其他参数保持原样
+                shift
+                ;;
+        esac
+    done
+}
+
 # 显示帮助信息
 show_help() {
     echo -e "${CYAN}Smart Paste URL 管理脚本${NC}"
     echo ""
     echo -e "${YELLOW}使用方法:${NC}"
-    echo "  ./manage.sh [命令]"
+    echo "  ./manage.sh [命令] [选项]"
     echo ""
     echo -e "${YELLOW}可用命令:${NC}"
     echo -e "  ${GREEN}start-server${NC}    启动服务端"
@@ -43,10 +60,14 @@ show_help() {
     echo -e "  ${GREEN}health${NC}          健康检查"
     echo -e "  ${GREEN}help${NC}            显示此帮助信息"
     echo ""
+    echo -e "${YELLOW}客户端选项:${NC}"
+    echo -e "  ${GREEN}--server=URL${NC}    指定服务器地址"
+    echo ""
     echo -e "${YELLOW}示例:${NC}"
-    echo "  ./manage.sh start          # 启动所有服务"
-    echo "  ./manage.sh stop           # 停止所有服务"
-    echo "  ./manage.sh status         # 查看状态"
+    echo "  ./manage.sh start                                    # 启动所有服务"
+    echo "  ./manage.sh start-client --server=http://1.2.3.4:8886  # 连接到远程服务器"
+    echo "  ./manage.sh stop                                     # 停止所有服务"
+    echo "  ./manage.sh status                                   # 查看状态"
 }
 
 # 检查进程是否运行
@@ -94,6 +115,29 @@ start_server() {
     
     if is_process_running "$SERVER_PID_FILE"; then
         echo -e "${GREEN}✓ 服务端启动成功 (PID: $(cat "$SERVER_PID_FILE"))${NC}"
+        
+        # 获取服务器IP地址
+        local server_ip=$(hostname -I | awk '{print $1}')
+        if [ -z "$server_ip" ]; then
+            server_ip="YOUR_SERVER_IP"
+        fi
+        
+        echo ""
+        echo -e "${CYAN}========================================${NC}"
+        echo -e "${CYAN}           服务器已启动！${NC}"
+        echo -e "${CYAN}========================================${NC}"
+        echo ""
+        echo -e "${GREEN}📋 客户端连接信息:${NC}"
+        echo -e "   服务器地址: ${YELLOW}http://$server_ip:8886${NC}"
+        echo ""
+        echo -e "${BLUE}💻 在客户端机器上执行以下命令:${NC}"
+        echo -e "   ${GREEN}./manage.sh start-client --server=http://$server_ip:8886${NC}"
+        echo ""
+        echo -e "${YELLOW}🔗 API端点:${NC}"
+        echo -e "   健康检查: http://$server_ip:8886/health"
+        echo -e "   上传接口: POST http://$server_ip:8886/upload"
+        echo -e "   图片查看: GET http://$server_ip:8886/image/{hash}"
+        echo ""
     else
         echo -e "${RED}✗ 服务端启动失败${NC}"
         return 1
@@ -122,6 +166,33 @@ start_client() {
         return 1
     fi
     
+    # 如果指定了服务器地址，更新配置文件
+    if [ ! -z "$SERVER_URL" ]; then
+        echo -e "${YELLOW}配置服务器地址: $SERVER_URL${NC}"
+        
+        # 备份原配置
+        if [ -f "config.json" ]; then
+            cp "config.json" "config.json.backup.$(date +%Y%m%d_%H%M%S)"
+        fi
+        
+        # 更新服务器地址
+        if [ -f "config.json" ]; then
+            sed -i "s|\"server_url\": *\"[^\"]*\"|\"server_url\": \"$SERVER_URL\"|" config.json
+            echo -e "${GREEN}✓ 已更新客户端配置文件${NC}"
+        else
+            # 如果配置文件不存在，创建一个
+            cat > config.json << EOF
+{
+  "server_url": "$SERVER_URL",
+  "check_interval": 1.0,
+  "supported_formats": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"],
+  "max_file_size": 10485760
+}
+EOF
+            echo -e "${GREEN}✓ 已创建客户端配置文件${NC}"
+        fi
+    fi
+    
     # 安装依赖
     if [ -f "requirements.txt" ]; then
         echo -e "${YELLOW}检查客户端依赖...${NC}"
@@ -140,6 +211,14 @@ start_client() {
     
     if is_process_running "$CLIENT_PID_FILE"; then
         echo -e "${GREEN}✓ 客户端启动成功 (PID: $(cat "$CLIENT_PID_FILE"))${NC}"
+        
+        # 显示当前配置的服务器地址
+        if [ -f "config.json" ]; then
+            local current_server=$(grep '"server_url"' config.json | sed 's/.*"server_url": *"\([^"]*\)".*/\1/')
+            echo -e "${BLUE}📡 连接到服务器: ${YELLOW}$current_server${NC}"
+        fi
+        echo ""
+        echo -e "${GREEN}🎉 现在可以复制图片到剪贴板测试功能了！${NC}"
     else
         echo -e "${RED}✗ 客户端启动失败${NC}"
         return 1
@@ -312,7 +391,13 @@ show_client_logs() {
 }
 
 # 主程序
-case "${1:-help}" in
+COMMAND="${1:-help}"
+
+# 解析参数（跳过第一个参数即命令）
+shift
+parse_args "$@"
+
+case "$COMMAND" in
     "start-server")
         start_server
         ;;

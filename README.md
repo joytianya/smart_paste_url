@@ -48,9 +48,76 @@ cd smart_paste_url
 
 本地服务将在 `http://localhost:8886` 运行，客户端会自动连接到本地服务器。
 
-### 方式二：生产环境部署（推荐）
+### 方式二：服务器IP部署（简单快捷）⭐
 
-如果你已经准备好**域名**和**服务器**，建议部署自己的服务：
+**适用场景：** 你有一台云服务器，想快速部署给Mac/Windows客户端使用
+
+#### 🖥️ 服务器端部署（5分钟搞定）
+
+```bash
+# 1. 在服务器上执行
+git clone https://github.com/joytianya/smart_paste_url.git
+cd smart_paste_url
+
+# 2. 一键启动服务端
+./manage.sh start-server
+
+# 🎉 服务启动后会显示客户端连接信息，例如：
+# ✅ 服务器已启动！
+# 📋 客户端连接信息：
+#    服务器地址: http://123.456.789.10:8886
+#    复制以下命令到客户端执行：
+#    ./manage.sh start-client --server=http://123.456.789.10:8886
+```
+
+#### 💻 客户端连接（Mac/Windows）
+
+在你的Mac或Windows机器上：
+
+```bash
+# 1. 克隆项目到本地
+git clone https://github.com/joytianya/smart_paste_url.git
+cd smart_paste_url
+
+# 2. 使用服务器提供的连接命令（替换为实际IP）
+./manage.sh start-client --server=http://YOUR_SERVER_IP:8886
+
+# 或者手动指定服务器地址
+./manage.sh start-client --server=http://123.456.789.10:8886
+```
+
+#### 🔒 SSH公钥配置（推荐）
+
+为了安全访问服务器，建议配置SSH公钥：
+
+```bash
+# 在本地生成SSH密钥（如果还没有）
+ssh-keygen -t rsa -b 4096 -C "your-email@example.com"
+
+# 复制公钥到服务器
+ssh-copy-id user@your-server-ip
+
+# 现在可以免密码SSH到服务器
+ssh user@your-server-ip
+```
+
+#### 🛡️ 服务器安全配置
+
+```bash
+# 开放必要端口（在服务器上执行）
+sudo ufw allow 22      # SSH
+sudo ufw allow 8886    # Smart Paste URL服务
+sudo ufw enable
+
+# 查看服务状态
+./manage.sh status
+```
+
+> 💡 **提示：** 这种方式无需域名和SSL证书，适合快速体验和团队内部使用。如需公网访问建议使用HTTPS。
+
+### 方式三：生产环境部署（域名+HTTPS）
+
+如果你已经准备好**域名**和**服务器**，建议部署自己的HTTPS服务：
 
 #### 🔧 配置要求
 
