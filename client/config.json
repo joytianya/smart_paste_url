@@ -1,0 +1,6 @@
+{
+  "server_url": "http://localhost:3000",
+  "check_interval": 1.0,
+  "supported_formats": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"],
+  "max_file_size": 10485760
+}
