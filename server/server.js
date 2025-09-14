@@ -60,9 +60,11 @@ app.get('/check/:hash', (req, res) => {
         }
         
         if (row) {
+            // 从文件名中提取扩展名
+            const fileExt = path.extname(row.filename);
             res.json({ 
                 exists: true, 
-                url: `${baseUrl}/image/${hash}`,
+                url: `${baseUrl}/image/${hash}${fileExt}`,
                 filename: row.filename,
                 uploaded_at: row.uploaded_at
             });
@@ -92,11 +94,13 @@ app.post('/upload', upload.single('image'), (req, res) => {
 
         if (row) {
             // 文件已存在，直接返回URL
+            // 从已存在文件名中提取扩展名
+            const fileExt = path.extname(row.filename);
             return res.json({
                 success: true,
                 exists: true,
                 hash: hash,
-                url: `${baseUrl}/image/${hash}`,
+                url: `${baseUrl}/image/${hash}${fileExt}`,
                 message: 'File already exists'
             });
         }
@@ -122,7 +126,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
                     success: true,
                     exists: false,
                     hash: hash,
-                    url: `${baseUrl}/image/${hash}`,
+                    url: `${baseUrl}/image/${hash}${fileExtension}`,
                     message: 'File uploaded successfully'
                 });
             });
@@ -130,11 +134,14 @@ app.post('/upload', upload.single('image'), (req, res) => {
     });
 });
 
-// 获取图片
+// 获取图片 (支持带扩展名的URL)
 app.get('/image/:hash', (req, res) => {
-    const { hash } = req.params;
+    let { hash } = req.params;
     
-    db.get('SELECT * FROM images WHERE hash = ?', [hash], (err, row) => {
+    // 如果hash包含扩展名，去掉它
+    const hashWithoutExt = path.parse(hash).name;
+    
+    db.get('SELECT * FROM images WHERE hash = ?', [hashWithoutExt], (err, row) => {
         if (err) {
             return res.status(500).json({ error: 'Database error' });
         }
@@ -171,7 +178,7 @@ app.get('/images', (req, res) => {
             original_name: row.original_name,
             size: row.size,
             uploaded_at: row.uploaded_at,
-            url: `${baseUrl}/image/${row.hash}`
+            url: `${baseUrl}/image/${row.hash}${path.extname(row.filename)}`
         }));
         
         res.json(images);
