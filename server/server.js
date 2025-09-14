@@ -7,7 +7,7 @@ const fs = require('fs');
 const cors = require('cors');
 
 const app = express();
-const port = 3000;
+const port = 34214;
 
 // 启用CORS
 app.use(cors());
@@ -182,11 +182,12 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.listen(port, () => {
-    console.log(`Smart Paste URL server running at http://localhost:${port}`);
-    console.log(`Upload endpoint: POST http://localhost:${port}/upload`);
-    console.log(`Check endpoint: GET http://localhost:${port}/check/{hash}`);
-    console.log(`Image endpoint: GET http://localhost:${port}/image/{hash}`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Smart Paste URL server running at http://0.0.0.0:${port}`);
+    console.log(`Local access: http://localhost:${port}`);
+    console.log(`Upload endpoint: POST http://0.0.0.0:${port}/upload`);
+    console.log(`Check endpoint: GET http://0.0.0.0:${port}/check/{hash}`);
+    console.log(`Image endpoint: GET http://0.0.0.0:${port}/image/{hash}`);
 });
 
 // 优雅关闭
