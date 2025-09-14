@@ -84,11 +84,8 @@ class SmartPasteClient:
                     print(f"图片太大 ({len(image_data)} bytes)，跳过上传")
                     return None, None
                 
-                # 保存原始 PIL Image 对象用于恢复
+                # 保存原始 PIL Image 对象
                 self.last_image_object = image.copy()  # 复制一份保存
-                
-                # 立即将原图片放回剪贴板（这是关键！）
-                self.put_image_to_clipboard(image)
                     
                 return image_data, self.calculate_image_hash(image_data)
                 
@@ -177,8 +174,7 @@ class SmartPasteClient:
         try:
             # 检测 Cmd + V （粘贴URL）
             if (Key.cmd in self.pressed_keys and 
-                hasattr(key, 'char') and key.char == 'v' and
-                Key.ctrl not in self.pressed_keys):  # 确保不是Ctrl+V
+                hasattr(key, 'char') and key.char == 'v'):
                 
                 # 防止重复触发（500ms内只能触发一次）
                 current_time = time.time()
@@ -186,26 +182,19 @@ class SmartPasteClient:
                     print("\n🔗 检测到 Cmd+V （URL模式）")
                     self.last_paste_time = current_time
                     self.paste_image_url()
-            
-            # Ctrl + V 让系统正常处理（粘贴图片）
-            # 不需要特殊处理，系统会自动粘贴剪贴板中的图片
                 
             self.pressed_keys.discard(key)
         except:
             pass
     
     def paste_image_url(self):
-        """处理Cmd+V - 直接输入图片URL"""
+        """处理Cmd+V - 替换剪贴板为URL并粘贴"""
         if self.last_url:
-            # 使用 pynput 直接输入URL文本，不依赖剪贴板
-            from pynput.keyboard import Controller
-            controller = Controller()
+            # 将URL放入剪贴板，让系统的Cmd+V正常粘贴
+            pyperclip.copy(self.last_url)
             
-            # 直接输入URL文本
-            controller.type(self.last_url)
-            
-            print(f"🔗 已输入图片URL: {self.last_url}")
-            print("📋 剪贴板仍保持原图片，Ctrl+V 可粘贴图片")
+            print(f"🔗 已将图片URL复制到剪贴板: {self.last_url}")
+            print("📋 剪贴板已替换为URL链接，可直接粘贴")
         else:
             print("📋 没有可用的图片URL")
     
@@ -227,12 +216,13 @@ class SmartPasteClient:
         
         if exists and url:
             print(f"图片已存在，使用现有URL: {url}")
-            # 不直接替换剪贴板，保持原始图片数据
+            # 直接将URL复制到剪贴板
+            pyperclip.copy(url)
             self.last_clipboard_hash = image_hash
             self.last_url = url  # 保存URL用于快捷键粘贴
             self.original_image_data = image_data  # 保存原始图片数据
-            print(f"🔗 图片URL已准备就绪: {url}")
-            print("📋 Ctrl+V 粘贴图片 | 🔗 Cmd+V 粘贴URL")
+            print(f"🔗 图片URL已复制到剪贴板: {url}")
+            print("🔗 Cmd+V 粘贴图片URL链接")
             return True
             
         # 上传新图片
@@ -245,12 +235,13 @@ class SmartPasteClient:
             else:
                 print(f"图片上传成功: {url}")
                 
-            # 不直接替换剪贴板，保持原始图片数据
+            # 直接将URL复制到剪贴板
+            pyperclip.copy(url)
             self.last_clipboard_hash = image_hash
             self.last_url = url  # 保存URL用于快捷键粘贴
             self.original_image_data = image_data  # 保存原始图片数据
-            print(f"🔗 图片URL已准备就绪: {url}")
-            print("📋 Ctrl+V 粘贴图片 | 🔗 Cmd+V 粘贴URL")
+            print(f"🔗 图片URL已复制到剪贴板: {url}")
+            print("🔗 Cmd+V 粘贴图片URL链接")
             return True
         else:
             print("图片上传失败")
@@ -292,8 +283,7 @@ class SmartPasteClient:
             
         print("🎯 开始监控剪贴板...")
         print("💡 复制图片后会自动上传生成URL")
-        print("📋 Ctrl+V - 粘贴图片（保持原剪贴板内容）")
-        print("🔗 Cmd+V - 粘贴URL链接（直接输入，不修改剪贴板）")
+        print("🔗 Cmd+V - 粘贴图片URL链接（自动替换剪贴板为URL）")
         print("⌨️  按 Ctrl+C 退出")
         print("=" * 50)
         
