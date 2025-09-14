@@ -46,27 +46,9 @@ cd smart_paste_url
 ./manage.sh status
 ```
 
-### 方式二：使用现有的演示服务器
+本地服务将在 `http://localhost:8886` 运行，客户端会自动连接到本地服务器。
 
-如果你只想快速体验功能，可以直接使用我们的演示服务器：
-
-**演示服务器：** `https://smart-paste.matrixtools.me`
-
-- 健康检查: https://smart-paste.matrixtools.me/health
-- 上传接口: POST https://smart-paste.matrixtools.me/upload
-- 检查接口: GET https://smart-paste.matrixtools.me/check/{hash}
-- 图片接口: GET https://smart-paste.matrixtools.me/image/{hash}
-
-```bash
-# 配置客户端连接到演示服务器
-cd client
-# 编辑 config.json，设置 server_url 为 "https://smart-paste.matrixtools.me"
-./manage.sh start-client
-```
-
-> ⚠️ **注意：** 演示服务器仅供测试使用，生产环境请部署自己的服务器。
-
-### 方式三：生产环境部署（推荐）
+### 方式二：生产环境部署（推荐）
 
 如果你已经准备好**域名**和**服务器**，建议部署自己的服务：
 
