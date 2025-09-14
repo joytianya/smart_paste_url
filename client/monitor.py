@@ -27,7 +27,7 @@ class SmartPasteClient:
             with open(config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
             
-            self.server_url = config.get('server_url', 'http://localhost:3000')
+            self.server_url = config.get('server_url', 'http://104.225.151.25:34214')
             self.check_interval = config.get('check_interval', 1.0)
             self.supported_formats = config.get('supported_formats', ['.png', '.jpg', '.jpeg'])
             self.max_file_size = config.get('max_file_size', 10 * 1024 * 1024)
@@ -36,7 +36,7 @@ class SmartPasteClient:
             
         except FileNotFoundError:
             print("配置文件未找到，使用默认配置")
-            self.server_url = 'http://localhost:3000'
+            self.server_url = 'http://104.225.151.25:34214'
             self.check_interval = 1.0
             self.supported_formats = ['.png', '.jpg', '.jpeg']
             self.max_file_size = 10 * 1024 * 1024

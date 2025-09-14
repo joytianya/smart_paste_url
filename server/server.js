@@ -8,6 +8,7 @@ const cors = require('cors');
 
 const app = express();
 const port = 34214;
+const baseUrl = process.env.BASE_URL || `http://104.225.151.25:${port}`;
 
 // 启用CORS
 app.use(cors());
@@ -61,7 +62,7 @@ app.get('/check/:hash', (req, res) => {
         if (row) {
             res.json({ 
                 exists: true, 
-                url: `http://localhost:${port}/image/${hash}`,
+                url: `${baseUrl}/image/${hash}`,
                 filename: row.filename,
                 uploaded_at: row.uploaded_at
             });
@@ -95,7 +96,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
                 success: true,
                 exists: true,
                 hash: hash,
-                url: `http://localhost:${port}/image/${hash}`,
+                url: `${baseUrl}/image/${hash}`,
                 message: 'File already exists'
             });
         }
@@ -121,7 +122,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
                     success: true,
                     exists: false,
                     hash: hash,
-                    url: `http://localhost:${port}/image/${hash}`,
+                    url: `${baseUrl}/image/${hash}`,
                     message: 'File uploaded successfully'
                 });
             });
@@ -170,7 +171,7 @@ app.get('/images', (req, res) => {
             original_name: row.original_name,
             size: row.size,
             uploaded_at: row.uploaded_at,
-            url: `http://localhost:${port}/image/${row.hash}`
+            url: `${baseUrl}/image/${row.hash}`
         }));
         
         res.json(images);
@@ -184,10 +185,10 @@ app.get('/health', (req, res) => {
 
 app.listen(port, '0.0.0.0', () => {
     console.log(`Smart Paste URL server running at http://0.0.0.0:${port}`);
-    console.log(`Local access: http://localhost:${port}`);
-    console.log(`Upload endpoint: POST http://0.0.0.0:${port}/upload`);
-    console.log(`Check endpoint: GET http://0.0.0.0:${port}/check/{hash}`);
-    console.log(`Image endpoint: GET http://0.0.0.0:${port}/image/{hash}`);
+    console.log(`External access: ${baseUrl}`);
+    console.log(`Upload endpoint: POST ${baseUrl}/upload`);
+    console.log(`Check endpoint: GET ${baseUrl}/check/{hash}`);
+    console.log(`Image endpoint: GET ${baseUrl}/image/{hash}`);
 });
 
 // 优雅关闭
