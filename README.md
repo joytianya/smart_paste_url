@@ -1,8 +1,10 @@
 # Smart Paste URL
 
+🚀 智能图片上传服务 - 监控剪贴板自动上传图片，基于hash去重，一键分享
+
 自动图片上传服务，监控剪贴板中的图片并上传到服务器，基于hash去重，自动将分享链接替换到剪贴板。
 
-## 功能特性
+## 🎯 功能特性
 
 - 🎯 **自动监控**：实时监控剪贴板中的图片变化
 - 🔄 **智能去重**：基于MD5 hash避免重复上传相同图片
@@ -10,6 +12,8 @@
 - ⚡ **快速分享**：通过URL直接访问和分享图片
 - 🌐 **HTTP API**：RESTful API支持多种客户端
 - 💾 **持久存储**：SQLite数据库存储元数据
+- 🛠️ **一键管理**：提供完整的管理脚本，支持启动、停止、状态查看
+- 🔍 **健康检查**：内置系统健康检查和日志管理
 
 ## 系统架构
 
@@ -24,46 +28,99 @@
 └─────────────────┘         └──────────────────┘
 ```
 
-## 快速开始
+## 🚀 快速开始
+
+### 一键启动（推荐）
+
+使用管理脚本可以轻松启动和管理所有服务：
+
+```bash
+# 克隆项目
+git clone <repository-url>
+cd smart_paste_url
+
+# 一键启动所有服务（服务端 + 客户端）
+./manage.sh start
+
+# 查看服务状态
+./manage.sh status
+
+# 停止所有服务
+./manage.sh stop
+```
 
 ### 远程服务器已部署 🎉
 
-服务器已部署在：`http://104.225.151.25:34214`
+如果你只需要使用客户端连接远程服务器：
+
+服务器地址：`http://104.225.151.25:34214`
 
 - 健康检查: http://104.225.151.25:34214/health
 - 上传接口: POST http://104.225.151.25:34214/upload
 - 检查接口: GET http://104.225.151.25:34214/check/{hash}
 - 图片接口: GET http://104.225.151.25:34214/image/{hash}
 
-### 启动客户端
+```bash
+# 仅启动客户端连接远程服务器
+./manage.sh start-client
+```
 
-**方法1：使用启动脚本**
+### 手动启动方式
+
+**启动客户端**
 ```bash
 cd client
 python3 start_client.py
-```
-
-**方法2：直接运行客户端**
-```bash
-cd client  
+# 或
 pip3 install Pillow pyperclip requests
 python3 monitor.py
 ```
 
-### 本地服务器部署（可选）
-
+**启动服务端**
 ```bash
 cd server
 npm install
 npm start
 ```
 
-### 3. 使用方法
+### 使用方法
 
 1. 复制任意图片到剪贴板
 2. 客户端自动检测并上传到服务器
 3. 剪贴板自动替换为分享链接
 4. 粘贴链接即可分享图片
+
+## 🛠️ 管理脚本使用
+
+管理脚本 `manage.sh` 提供了完整的项目管理功能：
+
+### 基本命令
+
+```bash
+./manage.sh help           # 显示帮助信息
+./manage.sh start          # 启动所有服务
+./manage.sh stop           # 停止所有服务
+./manage.sh restart        # 重启所有服务
+./manage.sh status         # 查看服务状态
+```
+
+### 单独管理
+
+```bash
+./manage.sh start-server   # 仅启动服务端
+./manage.sh start-client   # 仅启动客户端
+./manage.sh stop-server    # 仅停止服务端
+./manage.sh stop-client    # 仅停止客户端
+```
+
+### 维护和监控
+
+```bash
+./manage.sh install        # 安装所有依赖
+./manage.sh health         # 健康检查
+./manage.sh logs-server    # 查看服务端日志
+./manage.sh logs-client    # 查看客户端日志
+```
 
 ## API 接口
 
@@ -179,34 +236,307 @@ GET /images
 2. 检查Python依赖是否正确安装
 3. 尝试手动复制图片测试
 
-## 开发
+## 📦 部署方案
 
-### 启动开发模式
+### 本地部署
 
-服务端：
+**系统要求：**
+- Node.js 16+ 
+- Python 3.7+
+- npm/pip
+
+**一键部署：**
 ```bash
-cd server
-npm install
-npm run dev  # 使用 nodemon 自动重载
+git clone <repository-url>
+cd smart_paste_url
+./manage.sh install  # 安装所有依赖
+./manage.sh start     # 启动所有服务
 ```
 
-客户端：
+### 生产环境部署
+
+#### 服务器部署
+
+**1. 环境准备**
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install nodejs npm python3 python3-pip
+
+# CentOS/RHEL
+sudo yum install nodejs npm python3 python3-pip
+```
+
+**2. 项目部署**
+```bash
+git clone <repository-url>
+cd smart_paste_url
+
+# 安装依赖
+./manage.sh install
+
+# 配置服务端
+cd server
+# 修改 server.js 中的端口配置（如需要）
+
+# 启动服务
+cd ..
+./manage.sh start-server
+```
+
+**3. 配置反向代理（可选）**
+
+Nginx 配置示例：
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # 大文件上传支持
+    client_max_body_size 10M;
+}
+```
+
+**4. 系统服务配置**
+
+创建 systemd 服务文件：
+```bash
+sudo tee /etc/systemd/system/smart-paste-url.service > /dev/null <<EOF
+[Unit]
+Description=Smart Paste URL Service
+After=network.target
+
+[Service]
+Type=forking
+User=$USER
+WorkingDirectory=$PWD
+ExecStart=$PWD/manage.sh start
+ExecStop=$PWD/manage.sh stop
+ExecReload=$PWD/manage.sh restart
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 启用并启动服务
+sudo systemctl daemon-reload
+sudo systemctl enable smart-paste-url
+sudo systemctl start smart-paste-url
+```
+
+#### Docker 部署
+
+**创建 Dockerfile：**
+```dockerfile
+FROM node:16-alpine
+
+WORKDIR /app
+
+# 安装 Python
+RUN apk add --no-cache python3 py3-pip
+
+# 复制项目文件
+COPY . .
+
+# 安装依赖
+RUN cd server && npm install
+RUN cd client && pip3 install -r requirements.txt
+
+# 暴露端口
+EXPOSE 3000
+
+# 启动服务
+CMD ["./manage.sh", "start"]
+```
+
+**构建和运行：**
+```bash
+docker build -t smart-paste-url .
+docker run -d -p 3000:3000 --name smart-paste-url smart-paste-url
+```
+
+### 客户端部署
+
+#### Windows 客户端
+
+**1. 安装 Python 环境**
+- 下载并安装 Python 3.7+
+- 确保 pip 可用
+
+**2. 配置客户端**
 ```bash
 cd client
 pip install -r requirements.txt
-python monitor.py
+
+# 修改配置文件
+# 编辑 config.json，设置正确的服务器地址
 ```
 
-### 测试
+**3. 创建启动脚本**
+```batch
+@echo off
+cd /d "%~dp0client"
+python monitor.py
+pause
+```
+
+#### macOS/Linux 客户端
+
+**自动启动配置**
+```bash
+# 创建启动脚本
+cat > ~/start-smart-paste.sh << 'EOF'
+#!/bin/bash
+cd /path/to/smart_paste_url
+./manage.sh start-client
+EOF
+
+chmod +x ~/start-smart-paste.sh
+
+# 添加到启动项（Linux）
+echo "@/home/username/start-smart-paste.sh" >> ~/.config/lxsession/LXDE-pi/autostart
+
+# 添加到启动项（macOS）
+# 使用 LaunchAgent 或添加到登录项
+```
+
+### 配置优化
+
+#### 服务端优化
+
+**性能配置**
+```javascript
+// server.js 优化配置
+const express = require('express');
+const app = express();
+
+// 增加请求体大小限制
+app.use(express.json({limit: '10mb'}));
+
+// 启用 gzip 压缩
+const compression = require('compression');
+app.use(compression());
+
+// 设置缓存头
+app.use('/image', express.static('uploads', {
+  maxAge: '1y',
+  etag: true
+}));
+```
+
+#### 客户端配置
+
+**config.json 优化**
+```json
+{
+  "server_url": "https://your-domain.com",
+  "check_interval": 0.5,
+  "supported_formats": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"],
+  "max_file_size": 10485760,
+  "retry_times": 3,
+  "timeout": 30
+}
+```
+
+### 监控和日志
+
+**日志管理**
+```bash
+# 查看实时日志
+./manage.sh logs-server
+./manage.sh logs-client
+
+# 日志轮转配置
+sudo tee /etc/logrotate.d/smart-paste-url > /dev/null <<EOF
+/path/to/smart_paste_url/*.log {
+    daily
+    rotate 30
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 $USER $USER
+}
+EOF
+```
+
+**健康检查**
+```bash
+# 定期健康检查
+./manage.sh health
+
+# 添加到 crontab
+echo "*/5 * * * * /path/to/smart_paste_url/manage.sh health >> /var/log/smart-paste-health.log 2>&1" | crontab -
+```
+
+## 🛠️ 开发指南
+
+### 开发环境设置
+
+```bash
+# 克隆项目
+git clone <repository-url>
+cd smart_paste_url
+
+# 安装依赖
+./manage.sh install
+
+# 启动开发模式
+cd server && npm run dev &  # 服务端热重载
+cd client && python monitor.py  # 客户端
+```
+
+### 项目结构
+
+```
+smart_paste_url/
+├── manage.sh           # 一键管理脚本
+├── README.md          # 项目文档
+├── deploy.md          # 部署说明
+├── server/            # 服务端
+│   ├── server.js      # 主服务文件
+│   ├── package.json   # 依赖配置
+│   ├── uploads/       # 图片存储目录
+│   └── database.db    # SQLite 数据库
+├── client/            # 客户端
+│   ├── monitor.py     # 主监控程序
+│   ├── config.json    # 配置文件
+│   ├── requirements.txt # Python 依赖
+│   └── start_client.py # 启动脚本
+└── logs/              # 日志目录
+    ├── server.log     # 服务端日志
+    └── client.log     # 客户端日志
+```
+
+### API 测试
 
 ```bash
 # 测试服务器健康状态
 curl http://localhost:3000/health
 
+# 测试图片上传
+curl -X POST -F "image=@test.png" http://localhost:3000/upload
+
 # 查看已上传的图片
 curl http://localhost:3000/images
 ```
 
-## License
+### 贡献指南
 
-MIT
+1. Fork 项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开 Pull Request
+
+## 📝 License
+
+MIT License - 详见 [LICENSE](LICENSE) 文件
